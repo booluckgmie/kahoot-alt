@@ -266,6 +266,33 @@ export type Database = {
         }
         Returns: undefined
       }
+      verify_host_passcode: {
+        Args: { p_passcode: string }
+        Returns: boolean
+      }
+      create_quiz: {
+        Args: {
+          p_passcode: string
+          p_name: string
+          p_description: string
+          p_questions: Json
+        }
+        Returns: string
+      }
+      update_quiz: {
+        Args: {
+          p_passcode: string
+          p_quiz_id: string
+          p_name: string
+          p_description: string
+          p_questions: Json
+        }
+        Returns: undefined
+      }
+      delete_quiz: {
+        Args: { p_passcode: string; p_quiz_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

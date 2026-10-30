@@ -50,7 +50,11 @@ export function CheckIcon({ className = 'h-6 w-6' }: { className?: string }) {
       className={className}
       aria-label="Correct"
     >
-      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m4.5 12.75 6 6 9-13.5"
+      />
     </svg>
   )
 }
@@ -66,7 +70,11 @@ export function CrossIcon({ className = 'h-6 w-6' }: { className?: string }) {
       className={className}
       aria-label="Incorrect"
     >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6 18 18 6M6 6l12 12"
+      />
     </svg>
   )
 }
