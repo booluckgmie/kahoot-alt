@@ -7,6 +7,7 @@ const config: Config = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  safelist: [0, 1, 2, 3].flatMap((i) => [`choice-${i}`, `bar-${i}`]),
   theme: {
     extend: {
       backgroundImage: {

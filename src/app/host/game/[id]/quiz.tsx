@@ -2,6 +2,13 @@ import { TIME_TIL_CHOICE_REVEAL } from '@/constants'
 import { Answer, Participant, Question, supabase } from '@/types/types'
 import { useEffect, useRef, useState } from 'react'
 import { CountdownCircleTimer } from 'react-countdown-circle-timer'
+import {
+  CheckIcon,
+  ChoiceShape,
+  CrossIcon,
+  barClass,
+  choiceClass,
+} from '@/components/glass'
 
 export default function Quiz({
   question: question,
@@ -94,163 +101,104 @@ export default function Quiz({
   }, [question.id])
 
   return (
-    <div className="h-screen flex flex-col items-stretch bg-slate-900 relative">
-      <div className="absolute right-4 top-4">
+    <div className="flex min-h-[100dvh] flex-col px-4 py-4 sm:px-8 sm:py-6">
+      <div className="flex items-center justify-between gap-3 pb-4">
+        <span className="pill text-lg">
+          {question.order + 1} / {questionCount}
+        </span>
         {isAnswerRevealed && (
-          <button
-            className="p-2 bg-white text-black rounded hover:bg-gray-200"
-            onClick={getNextQuestion}
-          >
+          <button className="btn btn-primary" onClick={getNextQuestion}>
             Next
           </button>
         )}
       </div>
 
-      <div className="text-center">
-        <h2 className="pb-4 text-3xl bg-white font-bold mx-24 my-12 p-4 rounded inline-block">
-          {question.body}
-        </h2>
-      </div>
+      <h2 className="glass glass-strong mx-auto w-full max-w-5xl p-5 text-center text-2xl font-bold leading-snug sm:p-8 sm:text-4xl">
+        {question.body}
+      </h2>
 
-      <div className="flex-grow text-white px-8">
+      <div className="flex flex-grow items-center justify-center py-6">
         {hasShownChoices && !isAnswerRevealed && (
-          <div className="flex justify-between items-center">
-            <div className="text-5xl">
-              <CountdownCircleTimer
-                onComplete={() => {
-                  onTimeUp()
-                }}
-                isPlaying
-                duration={20}
-                colors={['#004777', '#F7B801', '#A30000', '#A30000']}
-                colorsTime={[7, 5, 2, 0]}
-              >
-                {({ remainingTime }) => remainingTime}
-              </CountdownCircleTimer>
-            </div>
-            <div className="text-center">
-              <div className="text-6xl pb-4">{answers.length}</div>
-              <div className="text-3xl">Answers</div>
+          <div className="flex w-full max-w-3xl flex-wrap items-center justify-around gap-8">
+            <CountdownCircleTimer
+              onComplete={() => {
+                onTimeUp()
+              }}
+              isPlaying
+              size={160}
+              strokeWidth={10}
+              duration={20}
+              colors={['#22d3ee', '#facc15', '#f87171', '#f87171']}
+              trailColor="rgba(255,255,255,0.15)"
+              colorsTime={[7, 5, 2, 0]}
+            >
+              {({ remainingTime }) => (
+                <span className="text-5xl font-bold text-white">
+                  {remainingTime}
+                </span>
+              )}
+            </CountdownCircleTimer>
+            <div className="glass px-10 py-6 text-center">
+              <div className="text-6xl font-bold">{answers.length}</div>
+              <div className="pt-1 text-xl text-white/75">Answers</div>
             </div>
           </div>
         )}
         {isAnswerRevealed && (
-          <div className="flex justify-center">
-            {question.choices.map((choice, index) => (
-              <div
-                key={choice.id}
-                className="mx-2 h-48 w-24 flex flex-col items-stretch justify-end"
-              >
-                <div className="flex-grow relative">
-                  <div
-                    style={{
-                      height: `${
-                        (answers.filter(
-                          (answer) => answer.choice_id === choice.id
-                        ).length *
-                          100) /
-                        (answers.length || 1)
-                      }%`,
-                    }}
-                    className={`absolute bottom-0 left-0 right-0 mb-1 rounded-t ${
-                      index === 0
-                        ? 'bg-red-500'
-                        : index === 1
-                        ? 'bg-blue-500'
-                        : index === 2
-                        ? 'bg-yellow-500'
-                        : 'bg-green-500'
-                    }`}
-                  ></div>
-                </div>
+          <div className="flex items-end justify-center gap-3 sm:gap-6">
+            {question.choices.map((choice, index) => {
+              const count = answers.filter(
+                (answer) => answer.choice_id === choice.id
+              ).length
+              return (
                 <div
-                  className={`mt-1 text-white text-lg text-center py-2 rounded-b ${
-                    index === 0
-                      ? 'bg-red-500'
-                      : index === 1
-                      ? 'bg-blue-500'
-                      : index === 2
-                      ? 'bg-yellow-500'
-                      : 'bg-green-500'
-                  }`}
+                  key={choice.id}
+                  className="flex h-56 w-16 flex-col items-stretch justify-end sm:h-64 sm:w-28"
                 >
-                  {
-                    answers.filter((answer) => answer.choice_id === choice.id)
-                      .length
-                  }
+                  <div className="relative flex-grow">
+                    <div
+                      style={{
+                        height: `${(count * 100) / (answers.length || 1)}%`,
+                      }}
+                      className={`absolute bottom-0 left-0 right-0 rounded-t-xl transition-all duration-700 ${barClass(
+                        index
+                      )}`}
+                    ></div>
+                  </div>
+                  <div
+                    className={`glass mt-2 flex items-center justify-center gap-1 py-2 text-lg font-bold ${
+                      choice.is_correct ? 'ring-2 ring-green-400' : 'opacity-70'
+                    }`}
+                  >
+                    <ChoiceShape index={index} />
+                    {count}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
 
       {hasShownChoices && (
-        <div className="flex justify-between flex-wrap p-4">
+        <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-3 sm:grid-cols-2">
           {question.choices.map((choice, index) => (
-            <div key={choice.id} className="w-1/2 p-1">
-              <div
-                className={`px-4 py-6 w-full text-2xl rounded font-bold text-white flex justify-between
-                ${
-                  index === 0
-                    ? 'bg-red-500'
-                    : index === 1
-                    ? 'bg-blue-500'
-                    : index === 2
-                    ? 'bg-yellow-500'
-                    : 'bg-green-500'
-                }
-                ${isAnswerRevealed && !choice.is_correct ? 'opacity-60' : ''}
-               `}
-              >
-                <div>{choice.body}</div>
-                {isAnswerRevealed && (
-                  <div>
-                    {choice.is_correct && (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={5}
-                        stroke="currentColor"
-                        className="w-6 h-6"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="m4.5 12.75 6 6 9-13.5"
-                        />
-                      </svg>
-                    )}
-                    {!choice.is_correct && (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={5}
-                        stroke="currentColor"
-                        className="w-6 h-6"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M6 18 18 6M6 6l12 12"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                )}
-              </div>
+            <div
+              key={choice.id}
+              className={`choice ${choiceClass(index)} justify-between text-xl sm:min-h-[6rem] sm:text-2xl ${
+                isAnswerRevealed && !choice.is_correct ? 'opacity-50' : ''
+              }`}
+            >
+              <span className="flex items-center gap-3">
+                <ChoiceShape index={index} />
+                {choice.body}
+              </span>
+              {isAnswerRevealed &&
+                (choice.is_correct ? <CheckIcon /> : <CrossIcon />)}
             </div>
           ))}
         </div>
       )}
-
-      <div className="flex text-white py-2 px-4 items-center bg-black">
-        <div className="text-2xl">
-          {question.order + 1}/{questionCount}
-        </div>
-      </div>
     </div>
   )
 }

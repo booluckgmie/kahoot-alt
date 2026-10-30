@@ -18,6 +18,13 @@ This project aims to provide similar functionality to Kahoot while being customi
 * [Tailwind CSS](https://tailwindcss.com/)
 
 
+## Environment variables
+
+Create `.env.local` (see `.env.local.example`):
+
+- `NEXT_PUBLIC_SUPABASE_URL`: your Supabase project URL
+- `SB_ANON_KEY`: your Supabase anon / publishable key
+
 ## Run Locally
 ```sh
 # Install dependencies 
