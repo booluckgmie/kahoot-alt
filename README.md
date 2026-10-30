@@ -47,6 +47,21 @@ Access the project root at / to join as a player.
 
 Access /host to join as a host.
 
+## Creating quizzes in the app
+
+Hosts can create, edit and delete quizzes from the dashboard (`/host/dashboard`) after entering a shared host passcode.
+The passcode is stored as a hash in Supabase and checked by database functions (see `supabase/migrations/20261030000000_quiz_admin.sql`).
+
+Run this once in the Supabase SQL editor to set it, using your own passcode:
+
+```sql
+insert into public.host_settings (passcode_hash)
+values (extensions.crypt('YOUR-PASSCODE', extensions.gen_salt('bf')))
+on conflict (id) do update set passcode_hash = excluded.passcode_hash;
+```
+
+Run the same statement again to change the passcode. Use a long one: anyone who can reach your site can try to guess it.
+
 ## Generate Types
 
 `supabase gen types typescript --local --schema public > src/types/supabase.ts`
