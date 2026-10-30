@@ -2,6 +2,12 @@ import { QUESTION_ANSWER_TIME, TIME_TIL_CHOICE_REVEAL } from '@/constants'
 import { Choice, Question, supabase } from '@/types/types'
 import { useState, useEffect } from 'react'
 import { ColorFormat, CountdownCircleTimer } from 'react-countdown-circle-timer'
+import {
+  CheckIcon,
+  ChoiceShape,
+  CrossIcon,
+  choiceClass,
+} from '@/components/glass'
 
 export default function Quiz({
   question: question,
@@ -52,155 +58,103 @@ export default function Quiz({
   }
 
   return (
-    <div className="h-screen flex flex-col items-stretch bg-slate-900 relative">
-      <div className="text-center">
-        <h2 className="pb-4 text-2xl bg-white font-bold mx-4 my-12 p-4 rounded inline-block md:text-3xl md:px-24">
+    <div className="flex min-h-[100dvh] flex-col items-stretch px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="flex items-center gap-3 pb-4">
+          <span className="pill text-sm">
+            {question.order + 1} / {questionCount}
+          </span>
+          <div
+            className="h-2 flex-grow overflow-hidden rounded-full bg-white/15"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={questionCount}
+            aria-valuenow={question.order + 1}
+          >
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-violet-400 to-cyan-400 transition-all duration-500"
+              style={{
+                width: `${((question.order + 1) * 100) / questionCount}%`,
+              }}
+            />
+          </div>
+        </div>
+
+        <h2 className="glass glass-strong p-5 text-center text-xl font-bold leading-snug sm:p-8 sm:text-3xl">
           {question.body}
         </h2>
       </div>
 
-      {!isAnswerRevealed && chosenChoice && (
-        <div className="flex-grow flex justify-center items-center">
-          <div className="text-white text-2xl text-center p-4">
-            Wait for others to answer...
+      <div className="mx-auto flex w-full max-w-3xl flex-grow flex-col">
+        {!isAnswerRevealed && chosenChoice && (
+          <div className="flex flex-grow items-center justify-center p-4 text-center text-xl text-white/80">
+            Wait for others to answer…
           </div>
-        </div>
-      )}
+        )}
 
-      {!hasShownChoices && !isAnswerRevealed && (
-        <div className="flex-grow text-transparent flex justify-center">
-          <CountdownCircleTimer
-            onComplete={() => {
-              setHasShownChoices(true)
-              setQuestionStartTime(Date.now())
-            }}
-            isPlaying
-            duration={TIME_TIL_CHOICE_REVEAL / 1000}
-            colors={['#fff', '#fff', '#fff', '#fff']}
-            trailColor={'transparent' as ColorFormat}
-            colorsTime={[7, 5, 2, 0]}
-          >
-            {({ remainingTime }) => remainingTime}
-          </CountdownCircleTimer>
-        </div>
-      )}
+        {!hasShownChoices && !isAnswerRevealed && (
+          <div className="flex flex-grow flex-col items-center justify-center gap-3 py-6">
+            <CountdownCircleTimer
+              onComplete={() => {
+                setHasShownChoices(true)
+                setQuestionStartTime(Date.now())
+              }}
+              isPlaying
+              size={140}
+              strokeWidth={8}
+              duration={TIME_TIL_CHOICE_REVEAL / 1000}
+              colors={['#a78bfa', '#22d3ee', '#22d3ee', '#22d3ee']}
+              trailColor={'rgba(255,255,255,0.15)' as ColorFormat}
+              colorsTime={[7, 5, 2, 0]}
+            >
+              {({ remainingTime }) => (
+                <span className="text-5xl font-bold text-white">
+                  {remainingTime}
+                </span>
+              )}
+            </CountdownCircleTimer>
+            <p className="text-white/70">Get ready…</p>
+          </div>
+        )}
 
-      {hasShownChoices && !isAnswerRevealed && !chosenChoice && (
-        <div className="flex-grow flex flex-col items-stretch">
-          <div className="flex-grow"></div>
-          <div className="flex justify-between flex-wrap p-4">
-            {question.choices.map((choice, index) => (
-              <div key={choice.id} className="w-1/2 p-1">
+        {hasShownChoices && !isAnswerRevealed && !chosenChoice && (
+          <div className="flex flex-grow flex-col justify-end">
+            <div className="grid grid-cols-1 gap-3 pt-6 sm:grid-cols-2">
+              {question.choices.map((choice, index) => (
                 <button
+                  key={choice.id}
                   onClick={() => answer(choice)}
                   disabled={chosenChoice !== null || isAnswerRevealed}
-                  className={`px-4 py-6 w-full text-xl rounded text-white flex justify-between md:text-2xl md:font-bold
-              ${
-                index === 0
-                  ? 'bg-red-500'
-                  : index === 1
-                  ? 'bg-blue-500'
-                  : index === 2
-                  ? 'bg-yellow-500'
-                  : 'bg-green-500'
-              }
-              ${isAnswerRevealed && !choice.is_correct ? 'opacity-60' : ''}
-             `}
+                  className={`choice ${choiceClass(index)} text-lg sm:min-h-[7rem] sm:text-xl`}
                 >
-                  <div>{choice.body}</div>
-                  {isAnswerRevealed && (
-                    <div>
-                      {choice.is_correct && (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={5}
-                          stroke="currentColor"
-                          className="w-6 h-6"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="m4.5 12.75 6 6 9-13.5"
-                          />
-                        </svg>
-                      )}
-                      {!choice.is_correct && (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={5}
-                          stroke="currentColor"
-                          className="w-6 h-6"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M6 18 18 6M6 6l12 12"
-                          />
-                        </svg>
-                      )}
-                    </div>
-                  )}
+                  <ChoiceShape index={index} />
+                  <span>{choice.body}</span>
                 </button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {isAnswerRevealed && (
-        <div className="flex-grow flex justify-center items-center flex-col">
-          <h2 className="text-white text-2xl text-center pb-2">
-            {chosenChoice?.is_correct ? 'Correct' : 'Incorrect'}
-          </h2>
-          <div
-            className={`text-white rounded-full p-4  ${
-              chosenChoice?.is_correct ? 'bg-green-500' : 'bg-red-500'
-            }`}
-          >
-            {chosenChoice?.is_correct && (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={5}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m4.5 12.75 6 6 9-13.5"
-                />
-              </svg>
-            )}
-            {!chosenChoice?.is_correct && (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={5}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18 18 6M6 6l12 12"
-                />
-              </svg>
-            )}
+        {isAnswerRevealed && (
+          <div className="flex flex-grow flex-col items-center justify-center gap-4 py-8">
+            <div
+              className={`rounded-full p-5 text-white shadow-lg ${
+                chosenChoice?.is_correct
+                  ? 'bg-green-500/80 shadow-green-500/40'
+                  : 'bg-red-500/80 shadow-red-500/40'
+              }`}
+            >
+              {chosenChoice?.is_correct ? (
+                <CheckIcon className="h-10 w-10" />
+              ) : (
+                <CrossIcon className="h-10 w-10" />
+              )}
+            </div>
+            <h2 className="text-3xl font-bold">
+              {chosenChoice?.is_correct ? 'Correct!' : 'Incorrect'}
+            </h2>
           </div>
-        </div>
-      )}
-
-      <div className="flex text-white py-2 px-4 items-center bg-black">
-        <div className="text-2xl">
-          {question.order + 1}/{questionCount}
-        </div>
+        )}
       </div>
     </div>
   )

@@ -1,9 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import '../../globals.css'
 import Link from 'next/link'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'SupaQuiz',
@@ -25,7 +21,7 @@ const menuItems: {
         viewBox="0 0 24 24"
         strokeWidth={1.5}
         stroke="currentColor"
-        className="w-6 h-6"
+        className="h-5 w-5"
       >
         <path
           strokeLinecap="round"
@@ -45,7 +41,7 @@ const menuItems: {
         viewBox="0 0 24 24"
         strokeWidth={1.5}
         stroke="currentColor"
-        className="w-6 h-6"
+        className="h-5 w-5"
       >
         <path
           strokeLinecap="round"
@@ -63,28 +59,28 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <>
-      <header className="h-16 px-2 flex justify-between border-b border-gray-200 items-center">
-        <h1>SupaQuiz</h1>
-      </header>
-      <div className="flex">
-        <nav className="border-r border-r-gray-200">
-          <ul>
+    <div className="mx-auto min-h-[100dvh] max-w-6xl px-4 pb-10 pt-4 sm:px-6">
+      <header className="glass sticky top-4 z-10 mb-6 flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <h1 className="bg-gradient-to-r from-violet-300 to-cyan-300 bg-clip-text text-xl font-extrabold text-transparent">
+          SupaQuiz
+        </h1>
+        <nav aria-label="Main">
+          <ul className="flex gap-2">
             {menuItems.map((item) => (
-              <li key={item.href} className="">
+              <li key={item.href}>
                 <Link
-                  className="flex items-center h-12 w-52 hover:bg-gray-100"
+                  className="btn btn-ghost min-h-[2.5rem] px-4 py-2 text-sm"
                   href={item.href}
                 >
-                  <div className="px-2">{item.icon}</div>
-                  <div className="flex-grow">{item.label}</div>
+                  {item.icon}
+                  <span>{item.label}</span>
                 </Link>
               </li>
             ))}
           </ul>
         </nav>
-        <main className="flex-grow p-2">{children}</main>
-      </div>
-    </>
+      </header>
+      <main>{children}</main>
+    </div>
   )
 }

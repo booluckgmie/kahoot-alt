@@ -5,6 +5,7 @@ import { RealtimeChannel } from '@supabase/supabase-js'
 import { Choice, Game, Participant, Question, supabase } from '@/types/types'
 import Lobby from './lobby'
 import Quiz from './quiz'
+import { Screen } from '@/components/glass'
 
 enum Screens {
   lobby = 'lobby',
@@ -101,7 +102,7 @@ export default function Home({
   }, [gameId])
 
   return (
-    <main className="bg-green-500 min-h-screen">
+    <main className="min-h-[100dvh]">
       {currentScreen == Screens.lobby && (
         <Lobby
           onRegisterCompleted={onRegisterCompleted}
@@ -125,11 +126,16 @@ export default function Home({
 
 function Results({ participant }: { participant: Participant }) {
   return (
-    <div className="flex justify-center items-center min-h-screen text-center">
-      <div className="p-8 bg-black text-white rounded-lg">
-        <h2 className="text-2xl pb-4">Hey {participant.nickname}！</h2>
-        <p>Thanks for playing 🎉</p>
+    <Screen>
+      <div className="glass w-full max-w-md p-8 text-center sm:p-10">
+        <div className="text-5xl pb-4" aria-hidden="true">
+          🎉
+        </div>
+        <h2 className="text-2xl font-bold pb-2">
+          Hey {participant.nickname}!
+        </h2>
+        <p className="text-white/75">Thanks for playing.</p>
       </div>
-    </div>
+    </Screen>
   )
 }

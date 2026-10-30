@@ -47,29 +47,42 @@ export default function Home() {
   }
 
   return (
-    <>
+    <div className="mx-auto grid max-w-5xl gap-4 sm:grid-cols-2">
+      {quizSet.length === 0 && (
+        <p className="glass p-6 text-white/70 sm:col-span-2">
+          No quizzes yet. Add one to your database and it will show up here.
+        </p>
+      )}
       {quizSet.map((quizSet) => (
-        <div
-          key={quizSet.id}
-          className="flex justify-start shadow my-4 mx-2 rounded"
-        >
-          <img className="h-28" src="/default.png" alt="default quiz image" />
-          <div className="p-2 flex flex-col justify-between items-stretch flex-grow">
-            <h2 className="font-bold">{quizSet.name}</h2>
-            <div className="flex justify-between items-end">
-              <div>{quizSet.questions.length} questions</div>
-              <div>
-                <button
-                  className="bg-green-500 text-white py-1 px-4 rounded"
-                  onClick={() => startGame(quizSet.id)}
-                >
-                  Start Game
-                </button>
-              </div>
+        <div key={quizSet.id} className="glass flex flex-col overflow-hidden">
+          <img
+            className="h-36 w-full object-cover opacity-90"
+            src="/default.png"
+            alt="default quiz image"
+          />
+          <div className="flex flex-grow flex-col justify-between gap-4 p-5">
+            <div>
+              <h2 className="text-xl font-bold">{quizSet.name}</h2>
+              {quizSet.description && (
+                <p className="pt-1 text-sm text-white/70">
+                  {quizSet.description}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="pill text-sm">
+                {quizSet.questions.length} questions
+              </span>
+              <button
+                className="btn btn-primary"
+                onClick={() => startGame(quizSet.id)}
+              >
+                Start Game
+              </button>
             </div>
           </div>
         </div>
       ))}
-    </>
+    </div>
   )
 }

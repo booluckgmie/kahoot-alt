@@ -1,5 +1,5 @@
 import { Participant, supabase } from '@/types/types'
-import { on } from 'events'
+import { Screen } from '@/components/glass'
 import { FormEvent, useEffect, useState } from 'react'
 
 export default function Lobby({
@@ -51,8 +51,8 @@ export default function Lobby({
   }, [gameId, onRegisterCompleted])
 
   return (
-    <div className="bg-green-500 flex justify-center items-center min-h-screen">
-      <div className="bg-black p-12">
+    <Screen>
+      <div className="glass w-full max-w-md p-6 sm:p-10">
         {!participant && (
           <Register
             gameId={gameId}
@@ -64,17 +64,21 @@ export default function Lobby({
         )}
 
         {participant && (
-          <div className="text-white max-w-md">
-            <h1 className="text-xl pb-4">Welcome {participant.nickname}！</h1>
-            <p>
-              You have been registered and your nickname should show up on the
-              admin screen. Please sit back and wait until the game master
-              starts the game.
+          <div className="text-center">
+            <div className="text-5xl pb-4" aria-hidden="true">
+              ✅
+            </div>
+            <h1 className="text-2xl font-bold pb-3">
+              Welcome {participant.nickname}!
+            </h1>
+            <p className="text-white/75">
+              You&apos;re in. Your nickname should show up on the host screen.
+              Sit back and wait for the host to start the game.
             </p>
           </div>
         )}
       </div>
-    </div>
+    </Screen>
   )
 }
 
@@ -87,11 +91,10 @@ function Register({
 }) {
   const onFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setSending(true)
-
-    if (!nickname) {
+    if (!nickname.trim()) {
       return
     }
+    setSending(true)
     const { data: participant, error } = await supabase
       .from('participants')
       .insert({ nickname, game_id: gameId })
@@ -111,16 +114,22 @@ function Register({
   const [sending, setSending] = useState(false)
 
   return (
-    <form onSubmit={(e) => onFormSubmit(e)}>
+    <form onSubmit={(e) => onFormSubmit(e)} className="flex flex-col gap-4">
+      <div className="text-center pb-2">
+        <h1 className="text-3xl font-bold">Join the game</h1>
+        <p className="text-white/70 pt-1">Pick a nickname to get started</p>
+      </div>
       <input
-        className="p-2 w-full border border-black text-black"
+        className="input text-center"
         type="text"
+        autoComplete="off"
+        aria-label="Nickname"
         onChange={(val) => setNickname(val.currentTarget.value)}
         placeholder="Nickname"
         maxLength={20}
       />
-      <button disabled={sending} className="w-full py-2 bg-green-500 mt-4">
-        Join
+      <button disabled={sending} className="btn btn-primary w-full text-lg">
+        {sending ? 'Joining…' : 'Join'}
       </button>
     </form>
   )
