@@ -52,18 +52,47 @@ export default function Home({
     getQuestions(game.quiz_set_id)
   }
 
-  const getQuestions = async (quizSetId: string) => {
+  const getQuestions = async (quizSetId: string, attempt = 0) => {
     const { data, error } = await supabase
       .from('questions')
       .select(`*, choices(*)`)
       .eq('quiz_set_id', quizSetId)
       .order('order', { ascending: true })
     if (error) {
-      getQuestions(quizSetId)
+      // retry with a growing delay instead of hammering the API
+      if (attempt < 10) {
+        setTimeout(
+          () => getQuestions(quizSetId, attempt + 1),
+          Math.min(1000 * Math.pow(2, attempt), 8000)
+        )
+      }
       return
     }
     setQuestions(data)
   }
+
+  /** Re-reads only the game phase: used to catch a start signal that was missed */
+  const refreshPhase = async () => {
+    const { data: game } = await supabase
+      .from('games')
+      .select()
+      .eq('id', gameId)
+      .single()
+    if (!game || game.phase == Screens.lobby) return
+    setCurrentScreen(game.phase as Screens)
+    if (game.phase == Screens.quiz) {
+      setCurrentQuestionSequence(game.current_question_sequence)
+      setIsAnswerRevealed(game.is_answer_revealed)
+    }
+  }
+
+  // Safety net for the lobby: if the realtime message never arrives, still start.
+  useEffect(() => {
+    if (currentScreen != Screens.lobby || !participant) return
+    const timer = setInterval(refreshPhase, 5000)
+    return () => clearInterval(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentScreen, participant, gameId])
 
   useEffect(() => {
     const setGameListner = (): RealtimeChannel => {
@@ -92,13 +121,17 @@ export default function Home({
             }
           }
         )
-        .subscribe()
+        .subscribe((status) => {
+          // after a (re)connect, catch up on anything that happened while offline
+          if (status === 'SUBSCRIBED' && stateRef.current) refreshPhase()
+        })
     }
 
     const gameChannel = setGameListner()
     return () => {
       supabase.removeChannel(gameChannel)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId])
 
   return (

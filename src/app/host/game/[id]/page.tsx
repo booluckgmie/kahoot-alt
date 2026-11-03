@@ -34,7 +34,7 @@ export default function Home({
   const [quizSet, setQuizSet] = useState<QuizSet>()
 
   useEffect(() => {
-    const getQuestions = async () => {
+    const getQuestions = async (attempt = 0) => {
       const { data: gameData, error: gameError } = await supabase
         .from('games')
         .select()
@@ -56,19 +56,29 @@ export default function Home({
         .single()
       if (error) {
         console.error(error.message)
-        getQuestions()
+        // retry with a growing delay instead of hammering the API
+        if (attempt < 10) {
+          setTimeout(
+            () => getQuestions(attempt + 1),
+            Math.min(1000 * Math.pow(2, attempt), 8000)
+          )
+        }
         return
       }
       setQuizSet(data)
     }
 
-    const setGameListner = async () => {
+    const loadParticipants = async () => {
       const { data } = await supabase
         .from('participants')
         .select()
         .eq('game_id', gameId)
         .order('created_at')
       if (data) setParticipants(data)
+    }
+
+    const setGameListner = async () => {
+      await loadParticipants()
 
       supabase
         .channel('game')
@@ -81,9 +91,12 @@ export default function Home({
             filter: `game_id=eq.${gameId}`,
           },
           (payload) => {
-            setParticipants((currentParticipants) => {
-              return [...currentParticipants, payload.new as Participant]
-            })
+            const joined = payload.new as Participant
+            setParticipants((currentParticipants) =>
+              currentParticipants.some((p) => p.id === joined.id)
+                ? currentParticipants
+                : [...currentParticipants, joined]
+            )
           }
         )
         .on(
@@ -101,7 +114,11 @@ export default function Home({
             setCurrentScreen(game.phase as AdminScreens)
           }
         )
-        .subscribe()
+        .subscribe((status) => {
+          // players who joined before the subscription was ready (or while the
+          // connection dropped) would otherwise never show up
+          if (status === 'SUBSCRIBED') loadParticipants()
+        })
 
       const { data: gameData, error: gameError } = await supabase
         .from('games')

@@ -1,6 +1,6 @@
 import { Participant, supabase } from '@/types/types'
 import { Screen } from '@/components/glass'
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useRef, useState } from 'react'
 
 export default function Lobby({
   gameId,
@@ -10,25 +10,43 @@ export default function Lobby({
   onRegisterCompleted: (participant: Participant) => void
 }) {
   const [participant, setParticipant] = useState<Participant | null>(null)
+  const [connectionNote, setConnectionNote] = useState('')
+
+  // The parent passes a new function on every render. Keep it in a ref so the
+  // effect below runs once per game instead of re-running (and re-querying) forever.
+  const onRegisterCompletedRef = useRef(onRegisterCompleted)
+  onRegisterCompletedRef.current = onRegisterCompleted
 
   useEffect(() => {
-    const fetchParticipant = async () => {
-      let userId: string | null = null
+    let cancelled = false
 
-      const { data: sessionData, error: sessionError } =
-        await supabase.auth.getSession()
+    const getUserId = async (): Promise<string | null> => {
+      const { data: sessionData } = await supabase.auth.getSession()
+      if (sessionData.session) return sessionData.session.user.id
 
-      if (sessionData.session) {
-        userId = sessionData.session?.user.id ?? null
-      } else {
+      // Many players on one network can hit the sign-in rate limit: back off and retry.
+      for (let attempt = 0; attempt < 8 && !cancelled; attempt++) {
         const { data, error } = await supabase.auth.signInAnonymously()
-        if (error) console.error(error)
-        userId = data?.user?.id ?? null
+        if (data?.user) {
+          setConnectionNote('')
+          return data.user.id
+        }
+        console.error(error)
+        setConnectionNote('Connecting… the game is busy, retrying.')
+        const wait = 1500 * (attempt + 1) + Math.random() * 1500
+        await new Promise((resolve) => setTimeout(resolve, wait))
       }
+      if (!cancelled) {
+        setConnectionNote(
+          'Could not connect. Check your internet and refresh the page to try again.'
+        )
+      }
+      return null
+    }
 
-      if (!userId) {
-        return
-      }
+    const fetchParticipant = async () => {
+      const userId = await getUserId()
+      if (!userId || cancelled) return
 
       const { data: participantData, error } = await supabase
         .from('participants')
@@ -37,22 +55,34 @@ export default function Lobby({
         .eq('user_id', userId)
         .maybeSingle()
 
+      if (cancelled) return
       if (error) {
         return alert(error.message)
       }
 
       if (participantData) {
         setParticipant(participantData)
-        onRegisterCompleted(participantData)
+        onRegisterCompletedRef.current(participantData)
       }
     }
 
     fetchParticipant()
-  }, [gameId, onRegisterCompleted])
+    return () => {
+      cancelled = true
+    }
+  }, [gameId])
 
   return (
     <Screen>
       <div className="glass w-full max-w-md p-6 sm:p-10">
+        {connectionNote && (
+          <p
+            role="status"
+            className="mb-4 rounded-2xl bg-white/10 px-4 py-3 text-center text-sm text-white/80"
+          >
+            {connectionNote}
+          </p>
+        )}
         {!participant && (
           <Register
             gameId={gameId}
